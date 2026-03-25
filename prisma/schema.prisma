@@ -1,0 +1,119 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "./generated"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Users {
+  id           String        @id @default(uuid()) @db.Uuid
+  cookies      Decimal       @default(0) @db.Decimal(65, 2)
+  cookiesPerS  Decimal       @default(0) @db.Decimal(65, 2)
+  rebirthLevel Int           @default(0)
+  rebirthPoint Int           @default(0)
+  createdAt    DateTime      @default(now())
+  lastUpdate   DateTime      @updatedAt
+
+  skills       UserSkills[]
+  upgrades     UserUpgrades[]
+  equipments   UserEquipments[]
+  rebirths     UserRebirths[]
+}
+
+model Skills {
+  id              Int       @id @default(autoincrement())
+  name            String
+  description     String
+  prerequisiteId  Int?      
+
+  prerequisite    Skills?   @relation("SkillPrerequisite", fields: [prerequisiteId], references: [id])
+  dependents      Skills[]  @relation("SkillPrerequisite")
+
+  users           UserSkills[]
+}
+
+model UserSkills {
+  id        Int     @id @default(autoincrement())
+  userId    String  @db.Uuid
+  skillId   Int
+  unlocked  Boolean @default(false)
+
+  user      Users   @relation(fields: [userId], references: [id])
+  skill     Skills  @relation(fields: [skillId], references: [id])
+
+  @@unique([userId, skillId])
+  @@index([userId])
+}
+
+model Upgrades {
+  id      Int     @id @default(autoincrement())
+  name    String
+  price   Decimal @db.Decimal(65, 2)
+  effect  String
+
+  users   UserUpgrades[]
+}
+
+model UserUpgrades {
+  id         Int      @id @default(autoincrement())
+  userId     String   @db.Uuid
+  upgradeId  Int
+  unlocked   Boolean  @default(false)
+
+  user       Users    @relation(fields: [userId], references: [id])
+  upgrade    Upgrades @relation(fields: [upgradeId], references: [id])
+
+  @@unique([userId, upgradeId])
+  @@index([userId])
+}
+
+model Equipments {
+  id      Int     @id @default(autoincrement())
+  name    String
+  price   Decimal @db.Decimal(65, 2)
+  effect  String
+
+  users   UserEquipments[]
+}
+
+model UserEquipments {
+  id          Int        @id @default(autoincrement())
+  userId      String     @db.Uuid
+  equipmentId Int
+  unlocked    Boolean    @default(false)
+
+  user        Users      @relation(fields: [userId], references: [id])
+  equipment   Equipments @relation(fields: [equipmentId], references: [id])
+
+  @@unique([userId, equipmentId])
+  @@index([userId])
+}
+
+model Rebirths {
+  id          Int     @id @default(autoincrement())
+  level       Int
+  prerequisite Int
+  reward      String
+
+  users       UserRebirths[]
+}
+
+model UserRebirths {
+  id         Int       @id @default(autoincrement())
+  userId     String    @db.Uuid
+  rebirthId  Int
+
+  user       Users     @relation(fields: [userId], references: [id])
+  rebirth    Rebirths  @relation(fields: [rebirthId], references: [id])
+
+  @@unique([userId, rebirthId])
+  @@index([userId])
+}
+
